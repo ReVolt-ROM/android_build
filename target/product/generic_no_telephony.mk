@@ -37,6 +37,9 @@ PRODUCT_PACKAGES := \
     Launcher2 \
     MusicFX \
     Provision \
+    Trebuchet \
+    LockClock \
+    DSPManager \
     Phone \
     Settings \
     SystemUI \
