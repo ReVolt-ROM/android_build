@@ -408,14 +408,14 @@ def WriteFullOTAPackage(input_zip, output_zip):
     script.FormatPartition("/data")
 
 
-  script.Print("#################################################");
-  script.Print("# ______  ______  __   ________  __      ______ #");
-  script.Print("#/\  == \/\  ___\/\ \ / /\  __ \/\ \    /\__  _\#");
-  script.Print("#\ \  __<\ \  __\\ \ \'/\ \ \/\ \ \ \___\/_/\ \/#");
-  script.Print("# \ \_\ \_\ \_____\ \__| \ \_____\ \_____\ \ \_\#");
-  script.Print("#  \/_/ /_/\/_____/\/_/   \/_____/\/_____/  \/_/#");
-  script.Print("#                                               #");
-  script.Print("#################################################");
+  script.Print("###################################################");
+  script.Print("# ______  ______    __   ________  __      ______ #");
+  script.Print("#/\  == \/\  ___\  /\ \ / /\  __ \/\ \    /\__  _\#");
+  script.Print("#\ \  __<\ \  __\  \ \ \ /\ \ \/\ \ \ \___\/_/\ \/#");
+  script.Print("# \ \_\ \_\ \_____\ \ \__| \ \_____\ \_____\ \ \_\#");
+  script.Print("#  \/_/ /_/\/_____/  \/_/   \/_____/\/_____/  \/_/#");
+  script.Print("#                                                 #");
+  script.Print("###################################################");
 
   if "selinux_fc" in OPTIONS.info_dict:
     WritePolicyConfig(OPTIONS.info_dict["selinux_fc"], output_zip)
