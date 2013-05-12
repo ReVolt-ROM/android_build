@@ -429,10 +429,10 @@ def WriteFullOTAPackage(input_zip, output_zip):
 
   revoltv = GetBuildProp("ro.revolt.version", OPTIONS.info_dict)
   if os.getenv("RV_BUILD") is not None:
-    build = ' '.join(revoltv.split('_')[3].split('-')).title()
+    build = GetBuildProp("ro.goo.version", OPTIONS.info_dict)
     script.Print("#   Version: %s"%(build));
   else:
-    build = ' '.join(revoltv.split('_')[2:]).title()
+    build = GetBuildProp("ro.goo.version", OPTIONS.info_dict)
     script.Print("#   Version: %s"%(build));
 
   device = GetBuildProp("ro.product.device", OPTIONS.info_dict)
