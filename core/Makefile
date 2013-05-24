@@ -1321,12 +1321,19 @@ endif
 
 $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := true
 
+ifeq ($(TARGET_USES_LOKI),true)
+    $(INTERNAL_OTA_PACKAGE_TARGET): loki := true
+else
+    $(INTERNAL_OTA_PACKAGE_TARGET): loki := false
+endif
+
 $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(DISTTOOLS)
 	@echo "Package OTA: $@"
 	$(OTA_FROM_TARGET_SCRIPT) -v \
 	   -p $(HOST_OUT) \
 	   -k $(KEY_CERT_PAIR) \
 	     --no_assert=$(skip_assert) \
+             --loki=$(loki) \
 	     --override_device=$(override_device) \
              --backup=$(backuptool) \
 	   $(BUILT_TARGET_FILES_PACKAGE) $@
