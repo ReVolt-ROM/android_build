@@ -104,11 +104,8 @@ OPTIONS.aslr_mode = True
 OPTIONS.worker_threads = 3
 OPTIONS.override_device = 'auto'
 OPTIONS.no_assert = False
-<<<<<<< HEAD
 OPTIONS.backuptool = False
-=======
 OPTIONS.loki = False
->>>>>>> d78d7da... WriteLokiImage
 
 def MostPopularKey(d, default):
   """Given a dict, return the key corresponding to the largest
@@ -814,16 +811,11 @@ def main(argv):
         OPTIONS.aslr_mode = False
     elif o in ("--override_device"):
       OPTIONS.override_device = a
-<<<<<<< HEAD
-=======
-    elif o in ("--persist"):
-      OPTIONS.persist = a
     elif o in ("--loki"):
       if a in ("true", "True"):
         OPTIONS.loki = True
       else:
         OPTIONS.loki = False
->>>>>>> d78d7da... WriteLokiImage
     elif o in ("--worker_threads"):
       OPTIONS.worker_threads = int(a)
     elif o in ("--backup"):
@@ -843,14 +835,9 @@ def main(argv):
                                               "extra_script=",
                                               "worker_threads=",
                                               "aslr_mode=",
-<<<<<<< HEAD
                                               "backup=",
 					      "override_device=",
-=======
-                                              "override_device=",
-                                              "persist=",
                                               "loki=",
->>>>>>> d78d7da... WriteLokiImage
                                               ],
                              extra_option_handler=option_handler)
 
