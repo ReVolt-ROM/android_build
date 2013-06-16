@@ -432,8 +432,10 @@ def WriteFullOTAPackage(input_zip, output_zip):
   script.Print("#                                                 #");
   script.Print("###################################################");
 
-  revoltv = GetBuildProp("ro.revolt.version", OPTIONS.info_dict)
   if os.getenv("RV_BUILD") is not None:
+    build = GetBuildProp("ro.goo.version", OPTIONS.info_dict)
+    script.Print("#   Version: %s"%(build));
+  elif os.getenv("RV_NIGHTLY") is not None:
     build = GetBuildProp("ro.goo.version", OPTIONS.info_dict)
     script.Print("#   Version: %s"%(build));
   else:
