@@ -475,61 +475,6 @@ class SignApk {
         private final ASN1ObjectIdentifier type;
         private WholeFileSignerOutputStream signer;
 
-        public CMSSigner(JarFile inputJar, File publicKeyFile, X509Certificate publicKey, PrivateKey privateKey, OutputStream outputStream) {
-            this.inputJar = inputJar;
-            this.publicKeyFile = publicKeyFile;
-            this.publicKey = publicKey;
-            this.privateKey = privateKey;
-            this.outputStream = outputStream;
-            this.type = new ASN1ObjectIdentifier(CMSObjectIdentifiers.data.getId());
-        }
-
-        public Object getContent() {
-            throw new UnsupportedOperationException();
-        }
-
-        public ASN1ObjectIdentifier getContentType() {
-            return type;
-        }
-
-        public void write(OutputStream out) throws IOException {
-            try {
-                signer = new WholeFileSignerOutputStream(out, outputStream);
-                JarOutputStream outputJar = new JarOutputStream(signer);
-
-                Manifest manifest = addDigestsToManifest(inputJar);
-                signFile(manifest, inputJar, publicKeyFile, publicKey, privateKey, outputJar);
-                // Assume the certificate is valid for at least an hour.
-                long timestamp = publicKey.getNotBefore().getTime() + 3600L * 1000;
-                addOtacert(outputJar, publicKeyFile, timestamp, manifest);
-
-                signer.notifyClosing();
-                outputJar.close();
-                signer.finish();
-            }
-            catch (Exception e) {
-                throw new IOException(e);
-            }
-        }
-
-        public void writeSignatureBlock(ByteArrayOutputStream temp) throws IOException,
-               CertificateEncodingException,
-               OperatorCreationException,
-               CMSException {
-            SignApk.writeSignatureBlock(this, publicKey, privateKey, temp);
-        }
-    }
-
-    private static class CMSSigner implements CMSTypedData {
-        private JarFile inputJar;
-        private File publicKeyFile;
-        private X509Certificate publicKey;
-        private PrivateKey privateKey;
-        private String outputFile;
-        private OutputStream outputStream;
-        private final ASN1ObjectIdentifier type;
-        private WholeFileSignerOutputStream signer;
-
         public CMSSigner(JarFile inputJar, File publicKeyFile,
                          X509Certificate publicKey, PrivateKey privateKey,
                          OutputStream outputStream) {
@@ -652,7 +597,6 @@ class SignApk {
         outputStream.write((total_size >> 8) & 0xff);
         temp.writeTo(outputStream);
     }
-
 
     private static void signFile(Manifest manifest, JarFile inputJar,
                                  X509Certificate[] publicKey, PrivateKey[] privateKey,
