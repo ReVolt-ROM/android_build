@@ -967,7 +967,7 @@ $(hide) $(PRIVATE_CC) \
 endef
 
 define transform-c-to-o-no-deps
-@echo "target $(PRIVATE_ARM_MODE) C: $(PRIVATE_MODULE) <= $<"
+@echo -e ${CL_PFX}"target $(PRIVATE_ARM_MODE) C:"${CL_RST}" $(PRIVATE_MODULE) <= $<"
 $(call transform-c-or-s-to-o-no-deps, $(PRIVATE_CFLAGS) $(PRIVATE_CONLYFLAGS) $(PRIVATE_DEBUG_CFLAGS))
 endef
 
@@ -993,7 +993,7 @@ endef
 ###########################################################
 
 define transform-m-to-o-no-deps
-@echo "target ObjC: $(PRIVATE_MODULE) <= $<"
+@echo -e ${CL_PFX}"target ObjC:"${CL_RST}" $(PRIVATE_MODULE) <= $<"
 $(call transform-c-or-s-to-o-no-deps, $(PRIVATE_CFLAGS) $(PRIVATE_DEBUG_CFLAGS))
 endef
 
@@ -1054,7 +1054,7 @@ $(hide) $(PRIVATE_CC) \
 endef
 
 define transform-host-c-to-o-no-deps
-@echo "host C: $(PRIVATE_MODULE) <= $<"
+@echo ${CL_PFX}"host C:"${CL_RST}" $(PRIVATE_MODULE) <= $<"
 $(call transform-host-c-or-s-to-o-no-deps, $(PRIVATE_CFLAGS) $(PRIVATE_CONLYFLAGS) $(PRIVATE_DEBUG_CFLAGS))
 endef
 
