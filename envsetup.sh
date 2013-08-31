@@ -1373,8 +1373,9 @@ PARTITION=`grep "^\/boot" $OUT/recovery/root/etc/recovery.fstab | awk {'print $3
 echo "Unable to determine boot partition."
             return 1
         fi
-fi
-adb start-server
+    fi
+    adb start-server
+    adb wait-for-device
     adb root
     sleep 1
     adb wait-for-online shell mount /system 2>&1 > /dev/null
@@ -1423,7 +1424,8 @@ PARTITION=`grep "^\/recovery" $OUT/recovery/root/etc/recovery.fstab | awk {'prin
             return 1
         fi
     fi
-adb start-server
+    adb start-server
+    adb wait-for-device
     adb root
     sleep 1
     adb wait-for-online shell mount /system 2>&1 >> /dev/null
