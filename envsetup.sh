@@ -1,26 +1,29 @@
 function hmm() {
 cat <<EOF
 Invoke ". build/envsetup.sh" from your shell to add the following functions to your environment:
-- lunch:   lunch <product_name>-<build_variant>
-- tapas:   tapas [<App1> <App2> ...] [arm|x86|mips|armv5] [eng|userdebug|user]
-- croot:   Changes directory to the top of the tree.
-- m:       Makes from the top of the tree.
-- mm:      Builds all of the modules in the current directory, but not their dependencies.
-- mmm:     Builds all of the modules in the supplied directories, but not their dependencies.
-- mma:     Builds all of the modules in the current directory, and their dependencies.
-- mmma:    Builds all of the modules in the supplied directories, and their dependencies.
-- cgrep:   Greps on all local C/C++ files.
-- jgrep:   Greps on all local Java files.
-- resgrep: Greps on all local res/*.xml files.
-- godir:   Go to the directory containing a file.
+- lunch:    lunch <product_name>-<build_variant>
+- tapas:    tapas [<App1> <App2> ...] [arm|x86|mips] [eng|userdebug|user]
+- croot:    Changes directory to the top of the tree.
+- groot:    Changes directory to the root of the git project.
+- m:        Makes from the top of the tree.
+- mm:       Builds all of the modules in the current directory.
+- mmm:      Builds all of the modules in the supplied directories.
+- cgrep:    Greps on all local C/C++ files.
+- mgrep:    Greps on all local Makefiles.
+- jgrep:    Greps on all local Java files.
+- resgrep:  Greps on all local res/*.xml files.
+- godir:    Go to the directory containing a file.
 - mka:      Builds using SCHED_BATCH on all processors
 - mbot:     Builds for all devices using the psuedo buildbot
 - mkapush:  Same as mka with the addition of adb pushing to the device.
+- pstest:   cherry pick a patch from the AOKP gerrit instance.
+- pspush:   push commit to AOKP gerrit instance.
+- taco:     Builds for a single device using the pseudo buildbot
 - reposync: Parallel repo sync using ionice and SCHED_BATCH
 - repopick: Utility to fetch changes from Gerrit.
 - installboot: Installs a boot.img to the connected device.
 - installrecovery: Installs a recovery.img to the connected device.
-
+- addaosp:  Add git remote for the AOSP repository
 Look at the source to view more functions. The complete list is:
 EOF
     T=$(gettop)
@@ -613,7 +616,7 @@ function _lunch()
     COMPREPLY=( $(compgen -W "${LUNCH_MENU_CHOICES[*]}" -- ${cur}) )
     return 0
 }
-complete -F _lunch lunch
+complete -F _lunch lunch 2>/dev/null
 
 # Configures the build to build unbundled apps.
 # Run tapas with one ore more app names (from LOCAL_PACKAGE_NAME)
@@ -657,8 +660,8 @@ function tapas()
 function eat()
 {
     if [ "$OUT" ] ; then
-        MODVERSION=`sed -n -e'/ro\.cm\.version/s/.*=//p' $OUT/system/build.prop`
-        ZIPFILE=update-cm-$MODVERSION-signed.zip
+        MODVERSION=`sed -n -e'/ro\.aokp\.version/s/^.*=//p' $OUT/system/build.prop`
+        ZIPFILE=$MODVERSION.zip
         ZIPPATH=$OUT/$ZIPFILE
         if [ ! -f $ZIPPATH ] ; then
             echo "Nothing to eat"
@@ -674,7 +677,7 @@ function eat()
             echo "Device Found.."
         fi
         echo "Pushing $ZIPFILE to device"
-        if adb push $ZIPPATH /storage/sdcard0/ ; then
+        if adb push $ZIPPATH /sdcard/ ; then
             cat << EOF > /tmp/command
 --update_package=/sdcard/$ZIPFILE
 EOF
@@ -883,6 +886,16 @@ function croot()
         \cd $(gettop)
     else
         echo "Couldn't locate the top of the tree.  Try setting TOP."
+    fi
+}
+
+function groot()
+{
+    T=$(git rev-parse --show-cdup)
+    if [ "$T" ]; then
+        cd $(git rev-parse --show-cdup)
+    else
+        echo "Already at the root of the git project."
     fi
 }
 
@@ -1108,6 +1121,12 @@ function jgrep()
 {
     find . -name .repo -prune -o -name .git -prune -o  -type f -name "*\.java" -print0 | xargs -0 grep --color -n "$@"
 }
+
+function mgrep()
+{
+    find . -name .repo -prune -o -name .git -prune -o  -type f -name "*\.mk" -print0 | xargs -0 grep --color -n "$@"
+}
+
 
 function cgrep()
 {
@@ -1572,13 +1591,85 @@ function mkapush() {
     esac
 }
 
+function pstest() {
+    if [ -z "$1" ] || [ "$1" = '--help' ] || [[ "$1" != */* ]]
+    then
+        echo "pstest"
+        echo "to use: pstest PATCH_ID/PATCH_SET"
+        echo "example: pstest 5555/5"
+    else
+        gerrit=gerrit.aokp.co
+        project=`git config --get remote.aokp.projectname`
+        patch="$1"
+        submission=`echo $patch | cut -f1 -d "/" | tail -c 3`
+        git fetch http://$gerrit/$project refs/changes/$submission/$patch && git cherry-pick FETCH_HEAD
+    fi
+}
+
+function pspush_error() {
+        echo "Requires ~/.ssh/config setup with the the following info:"
+        echo "      Host gerrit"
+        echo "        HostName gerrit.aokp.co"
+        echo "        User <your username>"
+        echo "        Port 29418"
+}
+
+function pspush() {
+    if [ -z "$1" ] || [ "$1" = '--help' ]; then
+        echo "pspush"
+        echo "to use:  pspush STATUS"
+        echo "where STATUS: for=regular; drafts=draft; heads=pushed to github"
+        echo "example: pspush for"
+    else
+        checkSshConfig=` grep -rH "gerrit.aokp.co" ~/.ssh/config `
+        if [ "$checkSshConfig" != "" ]; then
+            gerrit=gerrit.aokp.co
+            project=` git config --get remote.aokp.projectname`
+            status="$1"
+            git push gerrit:/$project HEAD:refs/$status/jb-mr2
+        else
+            pspush_error
+        fi
+    fi
+}
+
+function taco() {
+    for sauce in "$@"
+    do
+        breakfast $sauce
+        if [ $? -eq 0 ]; then
+            croot
+            ./vendor/aokp/bot/build_device.sh aokp_$sauce-userdebug $sauce
+        else
+            echo "No such item in brunch menu. Try 'breakfast'"
+        fi
+    done
+}
+
+function addaosp() {
+    git remote rm aosp >/dev/null 2>&1
+    if [ ! -d .git ]; then
+        echo "Not a git repository."
+        exit -1
+    fi
+    REPO=`pwd`
+    REPO=${REPO##$ANDROID_BUILD_TOP/}
+    git remote add aosp https://android.googlesource.com/platform/"$REPO".git
+    if ( git remote -v | grep -qv aosp ) then
+        echo "AOSP $REPO remote created"
+    else
+        echo "Error creating remote"
+        exit -1
+    fi
+}
+
 function reposync() {
     case `uname -s` in
         Darwin)
-            repo sync -j 4 "$@"
+            repo sync -j `sysctl hw.ncpu|cut -d" " -f2` "$@"
             ;;
         *)
-            schedtool -B -n 1 -e ionice -n 1 repo sync -j 4 "$@"
+            schedtool -B -n 1 -e ionice -n 1 repo sync -j $(cat /proc/cpuinfo | grep "^processor" | wc -l) "$@"
             ;;
     esac
 }
@@ -1723,8 +1814,10 @@ if [ "x$SHELL" != "x/bin/bash" ]; then
     case `ps -o command -p $$` in
         *bash*)
             ;;
+        *zsh*)
+            ;;
         *)
-            echo "WARNING: Only bash is supported, use of other shell would lead to erroneous results"
+            echo "WARNING: Only bash and zsh are supported, use of other shell may lead to erroneous results"
             ;;
     esac
 fi
@@ -1739,3 +1832,4 @@ done
 unset f
 
 addcompletions
+export ANDROID_BUILD_TOP=$(gettop)

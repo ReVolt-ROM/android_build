@@ -188,12 +188,6 @@ $(INSTALLED_BUILD_PROP_TARGET): $(BUILDINFO_SH) $(INTERNAL_BUILD_ID_MAKEFILE) $(
 			PRODUCT_MANUFACTURER="$(PRODUCT_MANUFACTURER)" \
 			PRIVATE_BUILD_DESC="$(PRIVATE_BUILD_DESC)" \
 			BUILD_ID="$(BUILD_ID)" \
-			BUILD_DISPLAY_ID="$(BUILD_DISPLAY_ID)" \
-			BUILD_NUMBER="$(BUILD_NUMBER)" \
-			PLATFORM_VERSION="$(PLATFORM_VERSION)" \
-			PLATFORM_SDK_VERSION="$(PLATFORM_SDK_VERSION)" \
-			PLATFORM_VERSION_CODENAME="$(PLATFORM_VERSION_CODENAME)" \
-			BUILD_VERSION_TAGS="$(BUILD_VERSION_TAGS)" \
 			TARGET_BOOTLOADER_BOARD_NAME="$(TARGET_BOOTLOADER_BOARD_NAME)" \
 			BUILD_FINGERPRINT="$(BUILD_FINGERPRINT)" \
 			TARGET_BOARD_PLATFORM="$(TARGET_BOARD_PLATFORM)" \
@@ -201,6 +195,12 @@ $(INSTALLED_BUILD_PROP_TARGET): $(BUILDINFO_SH) $(INTERNAL_BUILD_ID_MAKEFILE) $(
 			TARGET_CPU_ABI2="$(TARGET_CPU_ABI2)" \
 			TARGET_AAPT_CHARACTERISTICS="$(TARGET_AAPT_CHARACTERISTICS)" \
 			$(PRODUCT_BUILD_PROP_OVERRIDES) \
+			BUILD_DISPLAY_ID="$(BUILD_DISPLAY_ID)" \
+			BUILD_NUMBER="$(BUILD_NUMBER)" \
+			PLATFORM_VERSION="$(PLATFORM_VERSION)" \
+			PLATFORM_SDK_VERSION="$(PLATFORM_SDK_VERSION)" \
+			PLATFORM_VERSION_CODENAME="$(PLATFORM_VERSION_CODENAME)" \
+			BUILD_VERSION_TAGS="$(BUILD_VERSION_TAGS)" \
 	        bash $(BUILDINFO_SH) > $@
 	$(hide) $(foreach file,$(system_prop_file), \
 		if [ -f "$(file)" ]; then \
@@ -443,6 +443,7 @@ INTERNAL_BOOTIMAGE_ARGS += --genext2fs $(MKEXT2IMG)
 $(INSTALLED_BOOTIMAGE_TARGET): $(MKEXT2IMG) $(INTERNAL_BOOTIMAGE_FILES)
 	$(call pretty,"Target boot image: $@")
 	$(hide) $(MKEXT2BOOTIMG) $(INTERNAL_BOOTIMAGE_ARGS) --output $@
+	@echo -e ${CL_CYN}"Made boot image: $@"${CL_RST}
 
 else ifndef BOARD_CUSTOM_BOOTIMG_MK # TARGET_BOOTIMAGE_USE_EXT2 != true
 
@@ -450,6 +451,7 @@ $(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_FILES)
 	$(call pretty,"Target boot image: $@")
 	$(hide) $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $@
 	$(hide) $(call assert-max-image-size,$@,$(BOARD_BOOTIMAGE_PARTITION_SIZE),raw)
+	@echo -e ${CL_CYN}"Made boot image: $@"${CL_RST}
 
 endif # ifndef BOARD_CUSTOM_BOOTIMG_MK
 
@@ -665,8 +667,9 @@ recovery_build_prop := $(INSTALLED_BUILD_PROP_TARGET)
 recovery_binary := $(call intermediates-dir-for,EXECUTABLES,recovery)/recovery
 recovery_resources_common := $(call include-path-for, recovery)/res
 recovery_resources_private := $(strip $(wildcard $(TARGET_DEVICE_DIR)/recovery/res))
+recovery_root_private := $(strip $(wildcard $(TARGET_DEVICE_DIR)/recovery/root))
 recovery_resource_deps := $(shell find $(recovery_resources_common) \
-  $(recovery_resources_private) -type f)
+  $(recovery_resources_private) $(recovery_root_private) -type f)
 ifdef TARGET_RECOVERY_FSTAB
 recovery_fstab := $(TARGET_RECOVERY_FSTAB)
 else
@@ -747,35 +750,24 @@ $(TARGET_RECOVERY_ROOT_TIMESTAMP): $(INTERNAL_RECOVERY_FILES) \
 	@echo Copying baseline ramdisk...
 	$(hide) cp -R $(TARGET_ROOT_OUT) $(TARGET_RECOVERY_OUT)
 	@echo Modifying ramdisk contents...
-ifneq ($(BOARD_USES_COMBINED_RECOVERY),true)
 	$(hide) rm -f $(TARGET_RECOVERY_ROOT_OUT)/init*.rc
-endif
-ifeq ($(BOARD_USES_COMBINED_RECOVERY),true)
-	$(hide) cp -f $(recovery_initrc) $(TARGET_RECOVERY_ROOT_OUT)/
-else
 	$(hide) cp -f $(recovery_initrc) $(TARGET_RECOVERY_ROOT_OUT)/init.rc
-endif
 
 	$(hide) -cp $(TARGET_ROOT_OUT)/init.recovery.*.rc $(TARGET_RECOVERY_ROOT_OUT)/
 	$(hide) cp -f $(recovery_binary) $(TARGET_RECOVERY_ROOT_OUT)/sbin/
-ifneq ($(BOARD_USES_COMBINED_RECOVERY),true)
-	rm -f $(TARGET_RECOVERY_ROOT_OUT)/init.*.rc
-endif
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system/bin
 	$(hide) cp -rf $(recovery_resources_common) $(TARGET_RECOVERY_ROOT_OUT)/
 	$(hide) $(foreach item,$(recovery_resources_private), \
 	  cp -rf $(item) $(TARGET_RECOVERY_ROOT_OUT)/)
+	$(foreach item,$(recovery_root_private), \
+	  cp -rf $(item) $(TARGET_RECOVERY_OUT)/)
 	$(hide) $(foreach item,$(recovery_fstab), \
 	  cp -f $(item) $(TARGET_RECOVERY_ROOT_OUT)/etc/recovery.fstab)
 	$(hide) cp $(RECOVERY_INSTALL_OTA_KEYS) $(TARGET_RECOVERY_ROOT_OUT)/res/keys
-ifeq ($(BOARD_USES_COMBINED_RECOVERY),true)
-	cp $(INSTALLED_DEFAULT_PROP_TARGET) $(TARGET_RECOVERY_ROOT_OUT)/default.
-	rm -rf $(TARGET_RECOVERY_ROOT_OUT)/misc
-	mv $(TARGET_RECOVERY_ROOT_OUT)/etc $(TARGET_RECOVERY_ROOT_OUT)/misc
-else
 	$(hide) cat $(INSTALLED_DEFAULT_PROP_TARGET) $(recovery_build_prop) \
 	        > $(TARGET_RECOVERY_ROOT_OUT)/default.prop
-endif
+	echo Modifying default.prop
+	$(SED_INPLACE) 's/ro.build.date.utc=.*/ro.build.date.utc=0/g' $(TARGET_RECOVERY_ROOT_OUT)/default.prop
 	@echo ----- Made recovery filesystem -------- $(TARGET_RECOVERY_ROOT_OUT)
 	@touch $(TARGET_RECOVERY_ROOT_TIMESTAMP)
 
@@ -1205,7 +1197,7 @@ otatools: $(OTATOOLS)
 UNPACKBOOTIMG :=  $(HOST_OUT_EXECUTABLES)/unpackbootimg$(HOST_EXECUTABLE_SUFFIX)
 
 .PHONY: unpackbootimg
-otatools: $(UNPACKBOOTIMG)
+unpackbootimg: $(UNPACKBOOTIMG)
 
 # -----------------------------------------------------------------
 # A zip of the directories that map to the target filesystem.
@@ -1362,7 +1354,9 @@ ifdef PRODUCT_EXTRA_RECOVERY_KEYS
 	$(hide) echo "extra_recovery_keys=$(PRODUCT_EXTRA_RECOVERY_KEYS)" >> $(zip_root)/META/misc_info.txt
 endif
 	$(hide) echo "mkbootimg_args=$(BOARD_MKBOOTIMG_ARGS)" >> $(zip_root)/META/misc_info.txt
+ifneq ($(USE_SET_METADATA),false)
 	$(hide) echo "use_set_metadata=1" >> $(zip_root)/META/misc_info.txt
+endif
 	$(hide) echo "update_rename_support=1" >> $(zip_root)/META/misc_info.txt
 	$(call generate-userimage-prop-dictionary, $(zip_root)/META/misc_info.txt)
 	@# Zip everything up, preserving symlinks
@@ -1415,12 +1409,6 @@ endif
 
 $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := true
 
-ifeq ($(TARGET_USES_LOKI),true)
-    $(INTERNAL_OTA_PACKAGE_TARGET): loki := true
-else
-    $(INTERNAL_OTA_PACKAGE_TARGET): loki := false
-endif
-
 $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(DISTTOOLS)
 
 	@echo "Package OTA: $@"
@@ -1429,7 +1417,6 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(DISTTOOLS)
 	   -p $(HOST_OUT) \
 	   -k $(KEY_CERT_PAIR) \
 	     --no_assert=$(skip_assert) \
-             --loki=$(loki) \
 	     --override_device=$(override_device) \
              --backup=$(backuptool) \
 	   $(BUILT_TARGET_FILES_PACKAGE) $@

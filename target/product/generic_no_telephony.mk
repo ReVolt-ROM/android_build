@@ -27,8 +27,6 @@ PRODUCT_PACKAGES := \
     Camera2 \
     CertInstaller \
     Email \
-    Email2 \
-    Exchange \
     Exchange2 \
     FusedLocation \
     Gallery2 \
@@ -45,20 +43,15 @@ PRODUCT_PACKAGES := \
     SystemUI \
     TeleService \
     CalendarProvider \
-    bluetooth-health \
     hostapd \
     wpa_supplicant.conf \
     WallpaperCropper
 
 PRODUCT_PACKAGES += \
-    audio \
     clatd \
     clatd.conf \
     dhcpcd.conf \
-    network \
-    pand \
     pppd \
-    sdptool \
     wpa_supplicant
 
 PRODUCT_PACKAGES += \

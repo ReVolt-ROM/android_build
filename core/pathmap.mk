@@ -90,9 +90,7 @@ FRAMEWORKS_BASE_SUBDIRS := \
 	    telephony \
 	    wifi \
 	    keystore \
-	    icu4j \
-	    voip \
-            fmradio \
+	    fmradio \
 	 )
 
 #

@@ -31,7 +31,17 @@ function mcpguard () {
 }
 
 VERSION=$(cat bootable/recovery/Android.mk | grep RECOVERY_VERSION | grep RECOVERY_NAME | awk '{ print $4 }' | sed s/v//g)
+<<<<<<< HEAD
 echo Recovery Version: $VERSION
+=======
+RELEASE_VERSION=$VERSION
+if [ ! -z "$BOARD_TOUCH_RECOVERY" ]
+then
+    RELEASE_VERSION=touch-$VERSION
+fi
+
+echo Recovery Version: $RELEASE_VERSION
+>>>>>>> FETCH_HEAD
 
 for lunchoption in $PRODUCTS
 do
@@ -42,7 +52,11 @@ do
         rm -rf $OUT/recovery*
         rm -rf $OUT/root*
     fi
+<<<<<<< HEAD
     DEVICE_NAME=$(echo $TARGET_PRODUCT | sed s/koush_// | sed s/aosp_// |  sed s/motorola// | sed s/huawei_// | sed s/htc_// | sed s/_us// | sed s/cyanogen_// | sed s/generic_// | sed s/full_//)
+=======
+    DEVICE_NAME=$(echo $TARGET_PRODUCT | sed s/koush_// | sed s/cm_// | sed s/aosp_// |  sed s/motorola// | sed s/huawei_// | sed s/htc_// | sed s/_us// | sed s/cyanogen_// | sed s/generic_// | sed s/full_//)
+>>>>>>> FETCH_HEAD
     PRODUCT_NAME=$(basename $OUT)
     make -j16 recoveryzip
     RESULT=$?
@@ -51,8 +65,13 @@ do
         echo build error!
         break
     fi
+<<<<<<< HEAD
     mcpguard $OUT/recovery.img recoveries/recovery-clockwork-$VERSION-$DEVICE_NAME.img
     mcpguard $OUT/utilities/update.zip recoveries/recovery-clockwork-$VERSION-$DEVICE_NAME.zip
+=======
+    mcpguard $OUT/recovery.img recoveries/recovery-clockwork-$RELEASE_VERSION-$DEVICE_NAME.img
+    mcpguard $OUT/utilities/update.zip recoveries/recovery-clockwork-$RELEASE_VERSION-$DEVICE_NAME.zip
+>>>>>>> FETCH_HEAD
     
     if [ -f "ROMManagerManifest/devices.rb" ]
     then
