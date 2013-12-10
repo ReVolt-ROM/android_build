@@ -59,15 +59,8 @@ Usage:  ota_from_target_files [flags] input_target_files output_ota_package
   --override_device <device>
       Override device-specific asserts. Can be a comma-separated list.
 
-  --persist <true|false>
-      Specify whether to enable persistence across installs (on by default).
-
   --no_assert <true|false>
       Including this will turn device asserts off.
-
-  --loki <true|false>
-      Specify whether to run loki_patch and flash to boot.img (off by default).
-      Credit @djrbliss for creating the tools
 
 """
 
@@ -106,10 +99,8 @@ OPTIONS.extra_script = None
 OPTIONS.aslr_mode = True
 OPTIONS.worker_threads = 3
 OPTIONS.override_device = 'auto'
-OPTIONS.persist = True
 OPTIONS.no_assert = False
 OPTIONS.backuptool = False
-OPTIONS.loki = False
 
 def MostPopularKey(d, default):
   """Given a dict, return the key corresponding to the largest
@@ -512,11 +503,6 @@ def WriteFullOTAPackage(input_zip, output_zip):
   if "selinux_fc" in OPTIONS.info_dict:
     WritePolicyConfig(OPTIONS.info_dict["selinux_fc"], output_zip)
 
-  if OPTIONS.persist:
-    script.Mount("/system")
-    script.RunPersist("save")
-    script.Unmount("/system")
-
   script.FormatPartition("/system")
   script.Mount("/system")
   script.Print("Extracting System");
@@ -531,9 +517,6 @@ def WriteFullOTAPackage(input_zip, output_zip):
   Item.GetMetadata(input_zip)
   Item.Get("system").SetPermissions(script)
 
-  if OPTIONS.persist:
-    script.RunPersist("restore")
-
   common.CheckSize(boot_img.data, "boot.img", OPTIONS.info_dict)
   common.ZipWriteStr(output_zip, "boot.img", boot_img.data)
   script.ShowProgress(0.2, 0)
@@ -543,11 +526,7 @@ def WriteFullOTAPackage(input_zip, output_zip):
     script.RunBackup("restore")
 
   script.ShowProgress(0.2, 10)
-
-  if OPTIONS.loki:
-      script.WriteLokiImage("loki_flash", "boot.lok")
-  else:
-      script.WriteRawImage("/boot", "boot.img")
+  script.WriteRawImage("/boot", "boot.img")
 
   script.Print("Enjoy ReVolt JB !!");
 
