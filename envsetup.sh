@@ -24,6 +24,7 @@ Invoke ". build/envsetup.sh" from your shell to add the following functions to y
 - installboot: Installs a boot.img to the connected device.
 - installrecovery: Installs a recovery.img to the connected device.
 - addaosp:  Add git remote for the AOSP repository
+- sdkgen:   Create and add a custom sdk platform to your sdk directory from this source tree
 Look at the source to view more functions. The complete list is:
 EOF
     T=$(gettop)
@@ -1661,6 +1662,10 @@ function addaosp() {
         echo "Error creating remote"
         exit -1
     fi
+}
+
+function sdkgen() {
+        build/tools/customsdkgen.sh
 }
 
 function reposync() {
