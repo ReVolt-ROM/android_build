@@ -104,6 +104,7 @@ OPTIONS.aslr_mode = True
 OPTIONS.worker_threads = 3
 OPTIONS.override_device = 'auto'
 OPTIONS.no_assert = False
+OPTIONS.backuptool = False
 OPTIONS.override_prop = False
 
 def MostPopularKey(d, default):
@@ -911,6 +912,8 @@ def main(argv):
       OPTIONS.override_device = a
     elif o in ("--worker_threads"):
       OPTIONS.worker_threads = int(a)
+    elif o in ("--backup"):
+      OPTIONS.backuptool = bool(a.lower() == 'true')
     elif o in ("--override_prop"):
       OPTIONS.override_prop = bool(a.lower() == 'true')
     else:
@@ -928,6 +931,7 @@ def main(argv):
                                               "extra_script=",
                                               "worker_threads=",
                                               "aslr_mode=",
+                                              "backup=",
                                               "override_device=",
                                               "override_prop="],
                              extra_option_handler=option_handler)
