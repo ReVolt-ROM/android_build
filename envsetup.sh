@@ -503,6 +503,7 @@ function brunch()
 function breakfast()
 {
     target=$1
+    local variant=$2
     REVOLT_DEVICES_ONLY="true"
     unset LUNCH_MENU_CHOICES
     add_lunch_combo full-eng
@@ -523,7 +524,10 @@ function breakfast()
             lunch $target
         else
             # This is probably just the ReVolt model name
-            lunch revolt_$target-userdebug
+            if [ -z "$variant" ]; then
+                variant="userdebug"
+            fi
+            lunch revolt_$target-$variant
         fi
     fi
     return $?
@@ -661,7 +665,7 @@ function tapas()
 function eat()
 {
     if [ "$OUT" ] ; then
-        MODVERSION=`sed -n -e'/ro\.aokp\.version/s/^.*=//p' $OUT/system/build.prop`
+        MODVERSION=`sed -n -e'/ro\.revolt\.version/s/^.*=//p' $OUT/system/build.prop`
         ZIPFILE=$MODVERSION.zip
         ZIPPATH=$OUT/$ZIPFILE
         if [ ! -f $ZIPPATH ] ; then
