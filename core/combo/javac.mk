@@ -1,7 +1,7 @@
 # Selects a Java compiler.
 #
 # Inputs:
-#	CUSTOM_JAVA_COMPILER -- "eclipse", "openjdk". or nothing for the system 
+#	CUSTOM_JAVA_COMPILER -- "eclipse", "openjdk". or nothing for the system
 #                           default
 #
 # Outputs:
@@ -29,9 +29,9 @@ ifeq ($(CUSTOM_JAVA_COMPILER), openjdk)
         -source 1.5 -Xmaxerrs 9999999
     $(info CUSTOM_JAVA_COMPILER=openjdk)
 endif
-   
+
 HOST_JAVAC ?= $(COMMON_JAVAC)
 TARGET_JAVAC ?= $(COMMON_JAVAC)
-    
+
 #$(info HOST_JAVAC=$(HOST_JAVAC))
 #$(info TARGET_JAVAC=$(TARGET_JAVAC))
