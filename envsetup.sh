@@ -16,7 +16,7 @@ Invoke ". build/envsetup.sh" from your shell to add the following functions to y
 - mka:      Builds using SCHED_BATCH on all processors
 - mbot:     Builds for all devices using the psuedo buildbot
 - mkapush:  Same as mka with the addition of adb pushing to the device.
-- pstest:   cherry pick a patch from the AOKP gerrit instance.
+- pyrrit:   Helper subprogram to interact with AOKP gerrit
 - pspush:   push commit to AOKP gerrit instance.
 - taco:     Builds for a single device using the pseudo buildbot
 - reposync: Parallel repo sync using ionice and SCHED_BATCH
@@ -694,6 +694,8 @@ EOF
     fi
     return $?
 }
+
+
 
 function gettop
 {
@@ -1592,21 +1594,19 @@ function mkapush() {
     esac
 }
 
-function pstest() {
-    if [ -z "$1" ] || [ "$1" = '--help' ] || [[ "$1" != */* ]]
-    then
-        echo "pstest"
-        echo "to use: pstest PATCH_ID/PATCH_SET"
-        echo "example: pstest 5555/5"
-    else
-        gerrit=gerrit.aokp.co
-        project=`git config --get remote.aokp.projectname`
-        patch="$1"
-        submission=`echo $patch | cut -f1 -d "/" | tail -c 3`
-        git fetch http://$gerrit/$project refs/changes/$submission/$patch && git cherry-pick FETCH_HEAD
-    fi
-}
+function  pspush_host() {
+    echo ""
+    echo "Host aokp_gerrit"
+    echo "  Hostname gerrit.aokp.co"
+    echo "  Port 29418"
+    echo "  User $1"
 
+}
+function pyrrit
+{
+    T=$(gettop)
+    python2.7 ${T}/build/tools/pyrrit $@
+}
 function pspush_error() {
         echo "Requires ~/.ssh/config setup with the the following info:"
         echo "      Host gerrit"
